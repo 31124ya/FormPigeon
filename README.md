@@ -28,7 +28,7 @@ Discord actually renders in 2025+:
 | Hosting | Google Apps Script, bound to the form | Often a VPS or bot account |
 | Setup | Menu inside the form editor | Manually editing triggers |
 | Long answers | **Auto-paginates** into multiple cards | Truncated or fails silently |
-| Edited responses | Detected and labeled **📝 Edited** | Not detected |
+| Edited responses | Detected and labeled **Edited** | Not detected |
 | Respondent markdown | **Sanitized** — nobody can forge headings, spoilers or pings | Injected verbatim |
 | File uploads | Real file names via Drive, optional image gallery | Raw IDs or ignored |
 | Pings | `allowed_mentions` allow-list — **answers can never ping @everyone** | Up to chance |
@@ -107,7 +107,7 @@ A real, buildable JSON example produced by this exact codebase lives in
 1. In Discord: **Server Settings → Integrations → Webhooks → New Webhook**
 2. Pick the target channel, set the name/avatar you prefer.
 3. **Copy Webhook URL** — it looks like
-   `https://discord.com/api/webhooks/123456/abc…`.
+   `https://discord.com/api/webhooks/1820358217293047162/abZfO9XRBoT-…`.
 
 ### Step 2 — Open Apps Script from your form
 
