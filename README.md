@@ -107,7 +107,7 @@ A real, buildable JSON example produced by this exact codebase lives in
 1. In Discord: **Server Settings → Integrations → Webhooks → New Webhook**
 2. Pick the target channel, set the name/avatar you prefer.
 3. **Copy Webhook URL** — it looks like
-   `https://discord.com/api/webhooks/1820358217293047162/abZfO9XRBoT-…`.
+   `https://discord.com/api/webhooks/12345678901234567890/abc…`.
 
 ### Step 2 — Open Apps Script from your form
 
