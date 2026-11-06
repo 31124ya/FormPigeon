@@ -77,20 +77,20 @@ There is nothing to host, and the webhook URL never leaves your script.
 
 ```text
 ╭───────────────────────────────────────────────┐
-│ 📬  New response — 2026 Community Survey   ⊞  │   ← Container (type 17)
+│     New response — 2026 Community Survey   ⊞  │   ← Container (type 17)
 │ ───────────────────────────────────────────── │     accent stripe on the left
 │                                               │
 │ 1. Full name                                  │   ← Text Display (type 10)
-│    Ada Lovelace                               │     one per question
+│    Jeffrey Wong                               │     one per question
 │                                               │
 │ 2. Choose all that apply                      │
-│    • option one                               │
-│    • option two                               │
+│    • [Option 1]                               │
+│    • [Option 2]                               │
 │                                               │
 │ 3. Upload your poster                         │   ← file links / gallery
 │    • 📎 poster-final.png                      │
 │ ───────────────────────────────────────────── │   ← Separator (type 14)
-│ Response ID resp_abc · Received Nov 6, 12:34  │   ← footer links
+│ Response ID resp_abc · Received Nov 6, 12:00  │   ← footer links
 │ Open response · Form dashboard                │
 ╰───────────────────────────────────────────────┘
 ```
@@ -105,7 +105,6 @@ A real, buildable JSON example produced by this exact codebase lives in
 ### Step 1 — Create a Discord webhook
 
 1. In Discord: **Server Settings → Integrations → Webhooks → New Webhook**
-   (or on a channel: ⚙️ Edit Channel → Integrations).
 2. Pick the target channel, set the name/avatar you prefer.
 3. **Copy Webhook URL** — it looks like
    `https://discord.com/api/webhooks/123456/abc…`.
@@ -146,12 +145,12 @@ That is the only required change. All other options are documented in the
    **Advanced → Go to FormPigeon (unsafe) → Allow**. This warning appears for
    any self-authored script using sensitive scopes; nothing leaves your
    account except the webhook POST to Discord.
-3. Check Discord — you should see the sample card. 🎉
+3. Check Discord — you should see the sample card.
 
 ### Step 5 — Install the trigger
 
 1. Go back to your **form editor tab** and reload it.
-2. A new menu appears: **🕊️ Discord → 🟢 Install notification trigger**.
+2. A new menu appears: **Discord → Install notification trigger**.
 3. Submit a real response to verify end-to-end.
 
 That's it. Every new response now lands in Discord within seconds.
