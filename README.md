@@ -4,12 +4,9 @@
 
 **Google Forms → Discord notifications, rebuilt on [Components V2](https://docs.discord.com/developers/components/reference).**
 
-A Google Apps Script that posts every new form response to your
-Discord channel as one clean, colorful card.
-No servers.
-No dependencies.
-No polling.
-No cost.
+A single-file Google Apps Script that posts every new form response to your
+Discord channel as one clean, colorful card — no servers, no dependencies,
+no polling, no cost.
 
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Discord](https://img.shields.io/badge/Discord-Components_V2-5865F2)
@@ -160,6 +157,16 @@ shows which channel it posts into, then drops a plain one-line ping into that
 channel — so you can tell "bad URL", "webhook deleted" and "watching the wrong
 channel" apart in seconds.
 
+**"You do not have permission to call UrlFetchApp.fetch"?** The script was
+last authorized before it gained the external-request permission. Run
+**`menuCheckAuthorization`** from the editor (or Discord menu → Check
+authorization): it probes every permission FormPigeon uses, names the missing
+ones and prints the exact fix. Complete the new authorization dialog; if no
+prompt appears anymore, remove the app at
+[myaccount.google.com/permissions](https://myaccount.google.com/permissions)
+first, then run it again. Note that results are written to the execution log —
+a run from the editor never opens a popup, that is expected.
+
 ### Step 5 — Install the trigger
 
 1. Go back to your **form editor tab** and reload it.
@@ -295,6 +302,7 @@ it has seen is labeled *Edited response*. Limitations:
 | Log says *"started manually from the editor"* | You ran `onFormSubmit` directly in the Apps Script editor. A manual run passes no event object, so there is nothing to deliver — expected, nothing is broken. Use **Send test message** to preview a card, and a real submission to test the trigger end-to-end. |
 | Log says *"event arrived without a response payload"* | A trigger fired but delivered no response object. Most often the trigger was created against the linked **spreadsheet** instead of the form (the log then says so): remove it via **Remove notification trigger** and reinstall via the menu. For rare partial Google-side events, FormPigeon auto-recovers — it re-fetches the matching response within a 10-minute window and you'll see *"recovered the matching response"* in the log. |
 | Google says "Google hasn't verified this app" | Expected for self-authored scripts. **Advanced → Go to FormPigeon (unsafe) → Allow**. |
+| "You do not have permission to call UrlFetchApp.fetch" (`script.external_request`) | A missing OAuth permission — the script was usually authorized before the code started calling `UrlFetchApp`. Run **Check authorization** (Discord menu, or `menuCheckAuthorization` in the editor): it lists every missing permission with fix steps. Complete the authorization dialog; if no prompt appears anymore, revoke the app at [myaccount.google.com/permissions](https://myaccount.google.com/permissions) and run it again. Also keep `script.external_request` in `oauthScopes` in `appsscript.json`. |
 | Role mention shows but doesn't ping | Wrong role ID, or the mention was removed by `allowed_mentions`. Copy the ID again with Developer Mode; FormPigeon whitelists it automatically. |
 | Thumbnails are broken tiles | `FILE_THUMBNAILS: true` with non-public files. Make the upload folder public or set the flag back to `false`. |
 | File names show as "Uploaded file" | `RESOLVE_FILE_NAMES: false`, or the Drive permission wasn't granted. Re-run authorization, or enable the scope in `appsscript.json`. |

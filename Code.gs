@@ -754,6 +754,7 @@ function onOpen() {
     .createMenu('🕊️ Discord')
     .addItem('📮 Send test message', 'menuSendTestMessage')
     .addItem('🔌 Test webhook connection', 'menuTestWebhookConnection')
+    .addItem('🔐 Check authorization', 'menuCheckAuthorization')
     .addSeparator()
     .addItem('🟢 Install notification trigger', 'menuInstallTrigger')
     .addItem('🔴 Remove notification trigger', 'menuUninstallTrigger')
@@ -805,8 +806,8 @@ function humanizeError_(err) {
   if (/HTTP 400/.test(msg)) {
     return msg + '\n\nHint: HTTP 400 usually means the channel rejects the message (e.g. a forum channel needs CONFIG.THREAD_ID).';
   }
-  if (/authorization|authorize/i.test(msg)) {
-    return msg + '\n\nHint: the script has not been authorized yet. Run 📮 Send test message once and approve the permissions dialog.';
+  if (/external_request|googleapis\.com\/auth\/|urlfetchapp|authoriz/i.test(msg)) {
+    return msg + '\n\nHint: the script is missing one or more OAuth permissions. Run "Check authorization" from the Discord menu — it names the missing permission and the exact fix steps.';
   }
   return msg;
 }
@@ -912,6 +913,55 @@ function menuTestWebhookConnection() {
     Utilities.sleep(300);
   }
   report_('🔌 Webhook connection check', lines.join('\n\n'), false);
+}
+
+/**
+ * Probes every OAuth capability FormPigeon uses and reports which ones are
+ * missing, with exact fix steps. The localized "no permission to call
+ * UrlFetchApp.fetch" / "Authorization is required" errors all land here.
+ * Probing the services directly (instead of parsing the error text) keeps
+ * this working in every display language.
+ */
+function menuCheckAuthorization() {
+  const checks = [
+    ['Forms — read the form and responses', () => void FormApp.getActiveForm(), ''],
+    ['External requests — POST to Discord',
+      () => UrlFetchApp.fetch('https://discord.com', { muteHttpExceptions: true }), ''],
+    ['Triggers — install/remove the notification trigger',
+      () => void ScriptApp.getProjectTriggers(), ''],
+    ['Drive read-only — resolve uploaded file names',
+      () => void DriveApp.getRootFolder(), ' (needed only when RESOLVE_FILE_NAMES is true)'],
+    ['Send mail — failure alert emails',
+      () => void MailApp.getRemainingDailyQuota(), ' (needed only when EMAIL_ON_ERROR is true)'],
+  ];
+
+  const lines = [];
+  let missing = 0;
+  for (const [label, probe, note] of checks) {
+    try {
+      probe();
+      lines.push(`OK       ${label}${note}`);
+    } catch (err) {
+      missing += 1;
+      const detail = String(err && err.message ? err.message : err).slice(0, 80);
+      lines.push(`MISSING  ${label}${note}\n         ${detail}`);
+    }
+  }
+
+  lines.push('');
+  if (missing) {
+    lines.push('How to fix:');
+    lines.push('1. In the Apps Script editor, pick menuCheckAuthorization in the dropdown and press Run.');
+    lines.push('2. Complete the authorization dialog: Advanced → Go to FormPigeon (unsafe) → Allow.');
+    lines.push('3. If no dialog appears anymore, open Google Account → Security → Third-party access');
+    lines.push('   (myaccount.google.com/permissions), remove this project, then run step 1 again.');
+    if (!Array.isArray(CONFIG.WEBHOOK_URLS) || !CONFIG.WEBHOOK_URLS.length) {
+      lines.push('Note: CONFIG.WEBHOOK_URLS is empty — the external-request probe above only proves the permission, not your webhook.');
+    }
+  } else {
+    lines.push('All permissions granted — you are good to go.');
+  }
+  report_('Authorization check', lines.join('\n'), missing > 0);
 }
 
 function menuInstallTrigger() {
