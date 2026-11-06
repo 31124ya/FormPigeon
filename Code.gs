@@ -1,6 +1,6 @@
 // ══════════════════════════════════════════════════════════════════════
-//  🕊️  FormPigeon — Google Forms → Discord notifications
-//  Built on Discord's Components V2 message system (flag 1 << 15).
+//  🕊️  FormPigeon
+//  Built on Discord's Components V2 message system.
 // ──────────────────────────────────────────────────────────────────────
 //  QUICK START (full guide in README.md):
 //    1. Open your Google Form  →  Extensions  →  Apps Script
