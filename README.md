@@ -35,29 +35,29 @@ Discord actually renders in 2025+:
 
 ## Features
 
-- 🃏 **Components V2 single card** — `Container` with accent stripe, header
+- **Components V2 single card** — `Container` with accent stripe, header
   section with icon, separators, one `Text Display` per question, footer with
   links. This is the embed-replacement format Discord is pushing.
-- 📄 **Automatic pagination** — Discord allows 4,000 characters of text and 40
+- **Automatic pagination** — Discord allows 4,000 characters of text and 40
   components per message; FormPigeon splits long submissions into
   `Part 2 of 3` cards automatically.
-- 🕵️ **Edit detection** — when a respondent edits and re-submits their answer
+- **Edit detection** — when a respondent edits and re-submits their answer
   (forms with "Allow response editing"), the new notification is labeled
-  **📝 Edited response** instead of **📬 New response**.
-- 📎 **File uploads** — Drive file IDs become proper links with **real file
+  **Edited response** instead of **New response**.
+- **File uploads** — Drive file IDs become proper links with **real file
   names** resolved through Drive, or an image **Media Gallery** if you make the
   files public.
-- 🔔 **Mentions done right** — optional role/user/`@everyone` ping prepended to
+- **Mentions done right** — optional role/user/`@everyone` ping prepended to
   each notification; `allowed_mentions` guarantees respondent answers can never
   ping anyone.
-- 📬 **Multiple webhooks** — send the same card to several servers/channels.
-- 🧵 **Forum & thread support** — optionally post into a specific thread or
+- **Multiple webhooks** — send the same card to several servers/channels.
+- **Forum & thread support** — optionally post into a specific thread or
   forum post via `thread_id`.
-- 🛡️ **Markdown sanitization** — `**bold**`, `||spoiler||`, fake headings and
+- **Markdown sanitization** — `**bold**`, `||spoiler||`, fake headings and
   forged mentions typed by respondents render as harmless plain text.
-- ✅ **One-click test** — the 🕊️ Discord menu sends a preview card so you can
+- **One-click test** — the 🕊️ Discord menu sends a preview card so you can
   verify everything before going live.
-- 🚑 **Failure alerts** — if Discord rejects a post (deleted webhook, quota…),
+- **Failure alerts** — if Discord rejects a post (deleted webhook, quota…),
   the script emails you instead of failing silently.
 
 ## How it works
