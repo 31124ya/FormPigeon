@@ -28,36 +28,36 @@ Discord actually renders in 2025+:
 | Hosting | Google Apps Script, bound to the form | Often a VPS or bot account |
 | Setup | Menu inside the form editor | Manually editing triggers |
 | Long answers | **Auto-paginates** into multiple cards | Truncated or fails silently |
-| Edited responses | Detected and labeled **Edited** | Not detected |
+| Edited responses | Detected and labeled **📝 Edited** | Not detected |
 | Respondent markdown | **Sanitized** — nobody can forge headings, spoilers or pings | Injected verbatim |
 | File uploads | Real file names via Drive, optional image gallery | Raw IDs or ignored |
 | Pings | `allowed_mentions` allow-list — **answers can never ping @everyone** | Up to chance |
 
 ## Features
 
-- **Components V2 single card** — `Container` with accent stripe, header
+- 🃏 **Components V2 single card** — `Container` with accent stripe, header
   section with icon, separators, one `Text Display` per question, footer with
   links. This is the embed-replacement format Discord is pushing.
-- **Automatic pagination** — Discord allows 4,000 characters of text and 40
+- 📄 **Automatic pagination** — Discord allows 4,000 characters of text and 40
   components per message; FormPigeon splits long submissions into
   `Part 2 of 3` cards automatically.
-- **Edit detection** — when a respondent edits and re-submits their answer
+- 🕵️ **Edit detection** — when a respondent edits and re-submits their answer
   (forms with "Allow response editing"), the new notification is labeled
-  **Edited response** instead of **New response**.
-- **File uploads** — Drive file IDs become proper links with **real file
+  **📝 Edited response** instead of **📬 New response**.
+- 📎 **File uploads** — Drive file IDs become proper links with **real file
   names** resolved through Drive, or an image **Media Gallery** if you make the
   files public.
-- **Mentions done right** — optional role/user/`@everyone` ping prepended to
+- 🔔 **Mentions done right** — optional role/user/`@everyone` ping prepended to
   each notification; `allowed_mentions` guarantees respondent answers can never
   ping anyone.
-- **Multiple webhooks** — send the same card to several servers/channels.
-- **Forum & thread support** — optionally post into a specific thread or
+- 📬 **Multiple webhooks** — send the same card to several servers/channels.
+- 🧵 **Forum & thread support** — optionally post into a specific thread or
   forum post via `thread_id`.
-- **Markdown sanitization** — `**bold**`, `||spoiler||`, fake headings and
+- 🛡️ **Markdown sanitization** — `**bold**`, `||spoiler||`, fake headings and
   forged mentions typed by respondents render as harmless plain text.
-- **One-click test** — the 🕊️ Discord menu sends a preview card so you can
+- ✅ **One-click test** — the 🕊️ Discord menu sends a preview card so you can
   verify everything before going live.
-- **Failure alerts** — if Discord rejects a post (deleted webhook, quota…),
+- 🚑 **Failure alerts** — if Discord rejects a post (deleted webhook, quota…),
   the script emails you instead of failing silently.
 
 ## How it works
@@ -77,20 +77,20 @@ There is nothing to host, and the webhook URL never leaves your script.
 
 ```text
 ╭───────────────────────────────────────────────┐
-│     New response — 2026 Community Survey   ⊞  │   ← Container (type 17)
+│ 📬  New response — 2026 Community Survey   ⊞  │   ← Container (type 17)
 │ ───────────────────────────────────────────── │     accent stripe on the left
 │                                               │
 │ 1. Full name                                  │   ← Text Display (type 10)
-│    Jeffrey Wong                               │     one per question
+│    Ada Lovelace                               │     one per question
 │                                               │
 │ 2. Choose all that apply                      │
-│    • [Option 1]                               │
-│    • [Option 2]                               │
+│    • option one                               │
+│    • option two                               │
 │                                               │
 │ 3. Upload your poster                         │   ← file links / gallery
 │    • 📎 poster-final.png                      │
 │ ───────────────────────────────────────────── │   ← Separator (type 14)
-│ Response ID resp_abc · Received Nov 6, 12:00  │   ← footer links
+│ Response ID resp_abc · Received Nov 6, 12:34  │   ← footer links
 │ Open response · Form dashboard                │
 ╰───────────────────────────────────────────────┘
 ```
@@ -105,9 +105,10 @@ A real, buildable JSON example produced by this exact codebase lives in
 ### Step 1 — Create a Discord webhook
 
 1. In Discord: **Server Settings → Integrations → Webhooks → New Webhook**
+   (or on a channel: ⚙️ Edit Channel → Integrations).
 2. Pick the target channel, set the name/avatar you prefer.
 3. **Copy Webhook URL** — it looks like
-   `https://discord.com/api/webhooks/12345678901234567890/abc…`.
+   `https://discord.com/api/webhooks/123456/abc…`.
 
 ### Step 2 — Open Apps Script from your form
 
@@ -145,12 +146,20 @@ That is the only required change. All other options are documented in the
    **Advanced → Go to FormPigeon (unsafe) → Allow**. This warning appears for
    any self-authored script using sensitive scopes; nothing leaves your
    account except the webhook POST to Discord.
-3. Check Discord — you should see the sample card.
+3. Check Discord — you should see the sample card. 🎉
+   The result is also written to the execution log, so running the function
+   straight from the editor behaves exactly like the menu item.
+
+**No card, no error?** Run **`menuTestWebhookConnection`** from the editor
+(or 🕊️ Discord → 🔌 Test webhook connection). For each configured webhook it
+shows which channel it posts into, then drops a plain one-line ping into that
+channel — so you can tell "bad URL", "webhook deleted" and "watching the wrong
+channel" apart in seconds.
 
 ### Step 5 — Install the trigger
 
 1. Go back to your **form editor tab** and reload it.
-2. A new menu appears: **Discord → Install notification trigger**.
+2. A new menu appears: **🕊️ Discord → 🟢 Install notification trigger**.
 3. Submit a real response to verify end-to-end.
 
 That's it. Every new response now lands in Discord within seconds.
@@ -272,12 +281,16 @@ it has seen is labeled **📝 Edited response**. Limitations:
 
 | Symptom | Cause & fix |
 |---|---|
-| Nothing arrives in Discord | Run **📮 Send test message** from the menu. Then check **Executions** in the Apps Script editor for the error. Typical causes: wrong/partial webhook URL, webhook deleted, or the trigger was never installed (Check status). |
+| Nothing arrives in Discord | Run **📮 Send test message** from the menu. Then check **Executions** in the Apps Script editor for the error. Typical causes: wrong/partial webhook URL, webhook deleted, or the trigger was never installed (Check status). **🔌 Test webhook connection** pinpoints URL and channel problems in a single run. |
+| Test says *delivered* but Discord shows nothing | Run **🔌 Test webhook connection** — it names the exact channel each webhook posts into and posts a one-line ping there. Usually you were watching a different channel than the webhook's, or `THREAD_ID` points somewhere else. |
 | `HTTP 400` mentioning empty content | You called the webhook manually without `?with_components=true` — Components V2 is silently ignored otherwise. FormPigeon always adds it. |
+| `HTTP 400` "Cannot post in a forum channel" | The webhook belongs to a forum channel. Set `CONFIG.THREAD_ID` to the thread/post ID to post into, or move the webhook to a normal text channel. |
 | `HTTP 401/403` or `404` | The webhook token is invalid or the webhook was deleted/re-created. Copy a fresh URL. |
 | `HTTP 429` | Rate limit; FormPigeon sleeps and retries once automatically. Only likely with many webhooks × many parts. |
 | The 🕊️ Discord menu is missing | The script isn't bound to the form, or the editor tab wasn't reloaded. Create the script via **form → Extensions → Apps Script**, paste the code, save, reload the form tab. |
 | Trigger fires but no card | Check **Executions** — if `onFormSubmit` isn't listed, the trigger isn't installed. Use the menu's **Check status**. Multiple triggers can stack if you installed repeatedly; the install command removes duplicates first. |
+| Log says *"started manually from the editor"* | You pressed ▶ Run on `onFormSubmit` in the Apps Script editor. A manual run passes no event object, so there is nothing to deliver — expected, nothing is broken. Use **📮 Send test message** to preview a card, and a real submission to test the trigger end-to-end. |
+| Log says *"event arrived without a response payload"* | A trigger fired but delivered no response object. Most often the trigger was created against the linked **spreadsheet** instead of the form (the log then says so): remove it via **🔴 Remove notification trigger** and reinstall via the menu. For rare partial Google-side events, FormPigeon auto-recovers — it re-fetches the matching response within a 10-minute window and you'll see *"recovered the matching response"* in the log. |
 | Google says "Google hasn't verified this app" | Expected for self-authored scripts. **Advanced → Go to FormPigeon (unsafe) → Allow**. |
 | Role mention shows but doesn't ping | Wrong role ID, or the mention was removed by `allowed_mentions`. Copy the ID again with Developer Mode; FormPigeon whitelists it automatically. |
 | Thumbnails are broken tiles | `FILE_THUMBNAILS: true` with non-public files. Make the upload folder public or set the flag back to `false`. |

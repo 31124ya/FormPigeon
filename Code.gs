@@ -1,6 +1,6 @@
 // ══════════════════════════════════════════════════════════════════════
-//  🕊️  FormPigeon
-//  Built on Discord's Components V2 message system.
+//  🕊️  FormPigeon — Google Forms → Discord notifications
+//  Built on Discord's Components V2 message system (flag 1 << 15).
 // ──────────────────────────────────────────────────────────────────────
 //  QUICK START (full guide in README.md):
 //    1. Open your Google Form  →  Extensions  →  Apps Script
@@ -102,6 +102,11 @@ const NON_ANSWERABLE = new Set(['PAGE_BREAK', 'SECTION_HEADER', 'IMAGE', 'VIDEO'
 const RESERVED_TEXT_CHARS = 650;
 const RESERVED_COMPONENTS = 8;
 
+// When a submit event arrives without e.response (rare Google-side glitch),
+// FormPigeon may re-fetch the form's latest response — but only if it is
+// younger than this, was never delivered, and plausibly belongs to the event.
+const RECOVERY_WINDOW_MS = 10 * 60 * 1000;
+
 // ══════════════════════════════════════════════════════════════════════
 //  Event handling
 // ══════════════════════════════════════════════════════════════════════
@@ -112,10 +117,44 @@ const RESERVED_COMPONENTS = 8;
  */
 function onFormSubmit(e) {
   try {
-    if (!e || !e.response) {
-      console.error('FormPigeon: trigger fired without a response payload. Did you install it through the Discord menu?', e);
+    // Case 1 — no event object at all. Real trigger events always carry one,
+    // so this means the function was started by hand from the Apps Script
+    // editor (▶ Run). Nothing is broken; a manual run simply cannot
+    // simulate a form submission.
+    if (!e) {
+      console.warn(
+        'FormPigeon: onFormSubmit was started manually from the editor, so there is no event to process.\n' +
+        'A manual run cannot simulate a form submit — this is expected and nothing is broken.\n' +
+        'Preview a notification: 🕊️ Discord menu → "Send test message".\n' +
+        'Go live: 🕊️ Discord menu → "Install notification trigger", then submit a real response.'
+      );
       return;
     }
+
+    // Case 2 — a genuine event, but it carries no FormResponse. Known causes:
+    //   a) the trigger was created against the linked SPREADSHEET instead of
+    //      the form (the event then has values/range but no response);
+    //   b) a rare partial event delivered by Google.
+    // For (b) we try to recover the matching response before giving up.
+    if (!e.response) {
+      const looksLikeSheetEvent = Array.isArray(e.values) || !!e.range;
+      const recovered = looksLikeSheetEvent ? null : recoverMissingResponse_(e);
+      if (!recovered) {
+        console.error(
+          'FormPigeon: a form-submit event arrived without a response payload.' +
+          (looksLikeSheetEvent
+            ? ' The event looks like a SPREADSHEET event (it has values/range), so the trigger points at the linked Sheet, not the form. Remove it (🕊️ Discord menu → "Remove notification trigger"), then reinstall via the same menu.'
+            : ' If this keeps happening, remove the trigger (🕊️ Discord menu → "Remove notification trigger") and reinstall it via the same menu.') +
+          ` Event keys seen: [${describeEvent_(e)}].`
+        );
+        return;
+      }
+      console.warn(
+        `FormPigeon: the event arrived without e.response — recovered the matching response (${recovered.getId()}) from the form and delivered it.`
+      );
+      e.response = recovered;
+    }
+
     const form = e.source || FormApp.getActiveForm();
     const edited = CONFIG.MARK_EDITED && isReSubmission_(e.response.getId());
     const data = collectSubmissionData_(form, e.response, edited);
@@ -124,6 +163,55 @@ function onFormSubmit(e) {
     console.log(`FormPigeon: delivered "${data.formTitle}" — ${sent} webhook post(s), edited=${edited}, parts=${payloads.length}`);
   } catch (err) {
     handleFailure_(err);
+  }
+}
+
+/**
+ * Best-effort recovery for a submit event that arrived without e.response:
+ * fetches the form's latest response and returns it only if it is recent,
+ * was never delivered by FormPigeon, and plausibly matches this event.
+ */
+function recoverMissingResponse_(e) {
+  try {
+    const form = (e.source && typeof e.source.getResponses === 'function')
+      ? e.source
+      : (typeof FormApp.getActiveForm === 'function' ? FormApp.getActiveForm() : null);
+    if (!form || typeof form.getResponses !== 'function') return null;
+
+    const responses = form.getResponses();
+    const latest = responses.length ? responses[responses.length - 1] : null;
+    if (!latest) return null;
+
+    const ts = latest.getTimestamp();
+    if (!ts || Date.now() - ts.getTime() > RECOVERY_WINDOW_MS) return null;
+
+    // Never resend something FormPigeon already delivered.
+    if (hasSeenResponse_(latest.getId())) return null;
+
+    return latest;
+  } catch (err) {
+    console.warn('FormPigeon: response recovery attempt failed.', err && err.message ? err.message : err);
+    return null;
+  }
+}
+
+/** Reads the seen-IDs store without recording anything. */
+function hasSeenResponse_(responseId) {
+  if (!responseId) return false;
+  try {
+    const seen = JSON.parse(PropertiesService.getScriptProperties().getProperty(SEEN_KEY_NAME()) || '{}');
+    return Object.prototype.hasOwnProperty.call(seen, responseId);
+  } catch (err) {
+    return false;
+  }
+}
+
+/** Safe, human-readable list of an event object's own keys. */
+function describeEvent_(e) {
+  try {
+    return Object.keys(e || {}).join(', ') || '(empty)';
+  } catch (err) {
+    return '(uninspectable event)';
   }
 }
 
@@ -539,7 +627,12 @@ function truncate_(text, max) {
 //  Delivery
 // ══════════════════════════════════════════════════════════════════════
 
-/** Sends every payload to every configured webhook. */
+/**
+ * Sends every payload to every configured webhook.
+ * Webhooks are isolated: one broken webhook never blocks the others —
+ * its remaining parts are skipped and the rest still go out. A combined
+ * error is thrown only when NOT A SINGLE message was delivered.
+ */
 function deliver_(payloads) {
   const urls = (CONFIG.WEBHOOK_URLS || [])
     .map(u => String(u).trim())
@@ -553,12 +646,27 @@ function deliver_(payloads) {
   }
 
   let sent = 0;
+  const failures = [];
   for (const url of urls) {
     for (const payload of payloads) {
-      postToWebhook_(url, payload);
-      sent += 1;
+      try {
+        postToWebhook_(url, payload);
+        sent += 1;
+      } catch (err) {
+        failures.push(`${maskWebhookUrl_(url)} — ${err && err.message ? err.message : err}`);
+        break; // skip this webhook's remaining parts, keep trying other webhooks
+      }
       if (payloads.length > 1 || urls.length > 1) Utilities.sleep(400);
     }
+  }
+
+  if (!sent) {
+    throw new Error(`All ${urls.length} webhook(s) failed:\n${failures.join('\n')}`);
+  }
+  if (failures.length) {
+    console.warn(
+      `FormPigeon: ${sent} message(s) delivered, but ${failures.length} webhook(s) failed:\n${failures.join('\n')}`
+    );
   }
   return sent;
 }
@@ -645,6 +753,8 @@ function onOpen() {
   FormApp.getUi()
     .createMenu('🕊️ Discord')
     .addItem('📮 Send test message', 'menuSendTestMessage')
+    .addItem('🔌 Test webhook connection', 'menuTestWebhookConnection')
+    .addSeparator()
     .addItem('🟢 Install notification trigger', 'menuInstallTrigger')
     .addItem('🔴 Remove notification trigger', 'menuUninstallTrigger')
     .addSeparator()
@@ -652,62 +762,194 @@ function onOpen() {
     .addToUi();
 }
 
-function menuSendTestMessage() {
-  const ui = FormApp.getUi();
+// ── UI plumbing ─────────────────────────────────────────────────────────
+// Every menu function does its real work FIRST and reports the result
+// afterwards. That way they also behave sensibly when run directly from
+// the Apps Script editor (▶ Run), where FormApp.getUi() is unavailable
+// and would otherwise abort the run before anything is sent.
+
+/** Returns the form UI, or null outside a UI context (editor run, trigger). */
+function getUi_() {
   try {
-    const payloads = buildPayloadParts(sampleSubmissionData_());
-    const sent = deliver_(payloads);
-    ui.alert(
-      '🕊️ Test delivered',
-      `Sent ${sent} message(s) to your webhook(s).\n\n` +
-      'If nothing arrived in Discord, double-check CONFIG.WEBHOOK_URLS ' +
-      'and the Apps Script execution log.',
-      ui.ButtonSet.OK
-    );
+    return FormApp.getUi();
   } catch (err) {
-    ui.alert('❌ Test failed', String(err && err.message ? err.message : err), ui.ButtonSet.OK);
+    return null;
   }
 }
 
+/** Shows a result dialog in the form UI — or logs it when there is no UI. */
+function report_(title, message, isError) {
+  const ui = getUi_();
+  if (!ui) {
+    const text = `FormPigeon: ${title}\n${message}`;
+    if (isError) console.error(text);
+    else console.log(text);
+    return;
+  }
+  ui.alert(title, message, ui.ButtonSet.OK);
+}
+
+/** Turns delivery/API errors into actionable hints. */
+function humanizeError_(err) {
+  const msg = String(err && err.message ? err.message : err);
+  if (/does not contain a valid webhook URL/.test(msg)) return msg;
+  if (/HTTP 404/.test(msg)) {
+    return msg + '\n\nHint: the webhook was deleted or re-created. Copy a fresh URL from Discord (Server Settings → Integrations → Webhooks).';
+  }
+  if (/HTTP 401|HTTP 403/.test(msg)) {
+    return msg + '\n\nHint: the webhook token is invalid. Copy the full webhook URL again.';
+  }
+  if (/HTTP 400/.test(msg) && /forum|thread/i.test(msg)) {
+    return msg + '\n\nHint: this webhook belongs to a FORUM channel — set CONFIG.THREAD_ID to the thread ID to post into.';
+  }
+  if (/HTTP 400/.test(msg)) {
+    return msg + '\n\nHint: HTTP 400 usually means the channel rejects the message (e.g. a forum channel needs CONFIG.THREAD_ID).';
+  }
+  if (/authorization|authorize/i.test(msg)) {
+    return msg + '\n\nHint: the script has not been authorized yet. Run 📮 Send test message once and approve the permissions dialog.';
+  }
+  return msg;
+}
+
+/** Hides the secret token half of a webhook URL for display. */
+function maskWebhookUrl_(url) {
+  const match = String(url).match(/^(https:\/\/(?:discord|discordapp)\.com\/api\/webhooks\/\d+)\/[\w-]+/);
+  return match ? `${match[1]}/****` : String(url).slice(0, 60);
+}
+
+// ── Menu actions ─────────────────────────────────────────────────────────
+
+function menuSendTestMessage() {
+  try {
+    const payloads = buildPayloadParts(sampleSubmissionData_());
+    const sent = deliver_(payloads);
+    report_(
+      '🕊️ Test delivered',
+      `Sent ${sent} message(s) to your webhook(s).\n\n` +
+      'If nothing arrived in Discord, run "🔌 Test webhook connection" — it tells you ' +
+      'exactly which channel each webhook posts into and posts a plain-text ping there.',
+      false
+    );
+  } catch (err) {
+    report_('❌ Test failed', humanizeError_(err), true);
+  }
+}
+
+/**
+ * Diagnoses each configured webhook without involving the card builder:
+ *   1. GET the webhook → does the URL exist, and WHICH channel does it post into?
+ *   2. POST a one-line plain message → can this script actually reach Discord?
+ * Run this when the test card never shows up.
+ */
+function menuTestWebhookConnection() {
+  const urls = (CONFIG.WEBHOOK_URLS || [])
+    .map(u => String(u).trim())
+    .filter(Boolean);
+  if (!urls.length) {
+    report_('🔌 Webhook check', 'CONFIG.WEBHOOK_URLS is empty — paste at least one webhook URL into the CONFIG block at the top of the script.', true);
+    return;
+  }
+
+  const lines = [];
+  for (const url of urls) {
+    const base = url.split('?')[0];
+    if (!isWebhookUrl_(base)) {
+      lines.push(
+        `❌ ${maskWebhookUrl_(base)} — not a valid webhook URL. Copy the full URL again from Discord ` +
+        '(Server Settings → Integrations → Webhooks → your webhook → Copy Webhook URL).'
+      );
+      continue;
+    }
+    try {
+      // 1. Who/where is this webhook?
+      const infoResp = UrlFetchApp.fetch(base, { method: 'get', muteHttpExceptions: true });
+      const infoCode = infoResp.getResponseCode();
+      if (infoCode === 404) {
+        lines.push(`❌ ${maskWebhookUrl_(base)} — HTTP 404: this webhook no longer exists (deleted or re-created). Copy a fresh URL.`);
+        continue;
+      }
+      if (infoCode === 401 || infoCode === 403) {
+        lines.push(`❌ ${maskWebhookUrl_(base)} — HTTP ${infoCode}: the token part of the URL is wrong or was invalidated.`);
+        continue;
+      }
+      if (infoCode < 200 || infoCode >= 300) {
+        lines.push(`❌ ${maskWebhookUrl_(base)} — HTTP ${infoCode}: ${infoResp.getContentText().slice(0, 200)}`);
+        continue;
+      }
+
+      let channel = 'an unknown channel';
+      try {
+        const info = JSON.parse(infoResp.getContentText());
+        if (info && info.channel_id) channel = `channel ${info.channel_id}`;
+        if (info && info.name) channel += ` (webhook "${info.name}")`;
+      } catch (err) { /* keep the fallback label */ }
+
+      // 2. Can we actually post here?
+      const postResp = UrlFetchApp.fetch(`${base}?wait=true`, {
+        method: 'post',
+        contentType: 'application/json',
+        payload: JSON.stringify({
+          content: '🕊️ FormPigeon connection test — if you can read this message in this channel, the webhook works.',
+          allowed_mentions: { parse: [] },
+        }),
+        muteHttpExceptions: true,
+      });
+      const postCode = postResp.getResponseCode();
+      if (postCode >= 200 && postCode < 300) {
+        lines.push(
+          `✅ ${maskWebhookUrl_(base)} — works! A plain-text test message was just posted to ${channel}. ` +
+          'If you see it but NOT the card, you were looking at the wrong channel or the card run failed — check the execution log.'
+        );
+      } else {
+        lines.push(
+          `⚠️ ${maskWebhookUrl_(base)} — exists and posts into ${channel}, but posting failed with HTTP ${postCode}: ` +
+          postResp.getContentText().slice(0, 200)
+        );
+      }
+    } catch (err) {
+      lines.push(`❌ ${maskWebhookUrl_(base)} — ${err && err.message ? err.message : err}`);
+    }
+    Utilities.sleep(300);
+  }
+  report_('🔌 Webhook connection check', lines.join('\n\n'), false);
+}
+
 function menuInstallTrigger() {
-  const ui = FormApp.getUi();
   try {
     const form = FormApp.getActiveForm();
     if (!form) throw new Error('This script is not bound to a form. Open your form → Extensions → Apps Script and paste the code there.');
     assertConfigured_();
     removeExistingTriggers_(form);
     ScriptApp.newTrigger('onFormSubmit').forForm(form).onFormSubmit().create();
-    ui.alert(
+    report_(
       '✅ Trigger installed',
       'Every new form response will now be posted to Discord.\n\n' +
       'Tip: send one real submission to verify end-to-end.',
-      ui.ButtonSet.OK
+      false
     );
   } catch (err) {
-    ui.alert('❌ Install failed', String(err && err.message ? err.message : err), ui.ButtonSet.OK);
+    report_('❌ Install failed', humanizeError_(err), true);
   }
 }
 
 function menuUninstallTrigger() {
-  const ui = FormApp.getUi();
   try {
     const form = FormApp.getActiveForm();
     if (!form) throw new Error('This script is not bound to a form.');
     const removed = removeExistingTriggers_(form);
-    ui.alert(
+    report_(
       removed ? '🗑️ Trigger removed' : 'Nothing to remove',
       removed
         ? 'Notifications are now switched off. The script and its authorization remain.'
         : 'No notification trigger was installed for this form.',
-      ui.ButtonSet.OK
+      false
     );
   } catch (err) {
-    ui.alert('❌ Remove failed', String(err && err.message ? err.message : err), ui.ButtonSet.OK);
+    report_('❌ Remove failed', humanizeError_(err), true);
   }
 }
 
 function menuShowStatus() {
-  const ui = FormApp.getUi();
   try {
     const form = FormApp.getActiveForm();
     const triggers = form
@@ -727,9 +969,9 @@ function menuShowStatus() {
       lines.push('');
       lines.push('⚠️ This script is not bound to a form — the Discord menu only works from a form-bound script.');
     }
-    ui.alert('ℹ️ FormPigeon status', lines.join('\n'), ui.ButtonSet.OK);
+    report_('ℹ️ FormPigeon status', lines.join('\n'), false);
   } catch (err) {
-    ui.alert('❌ Status failed', String(err && err.message ? err.message : err), ui.ButtonSet.OK);
+    report_('❌ Status failed', humanizeError_(err), true);
   }
 }
 
