@@ -1,0 +1,73 @@
+{
+  "flags": 32768,
+  "username": "🕊️ FormPigeon",
+  "allowed_mentions": {
+    "parse": []
+  },
+  "components": [
+    {
+      "type": 17,
+      "accent_color": 5793266,
+      "components": [
+        {
+          "type": 9,
+          "components": [
+            {
+              "type": 10,
+              "content": "## 📝 Edited response — 2026 Community Survey\n-# Respondent: someone@example.com · Received: 2026-11-06 12:34 UTC"
+            }
+          ],
+          "accessory": {
+            "type": 11,
+            "media": {
+              "url": "https://ssl.gstatic.com/images/branding/product/1x/forms_48dp.png"
+            },
+            "description": "Google Forms logo"
+          }
+        },
+        {
+          "type": 14,
+          "divider": true,
+          "spacing": 1
+        },
+        {
+          "type": 10,
+          "content": "**1. Full name**\nAda Lovelace"
+        },
+        {
+          "type": 10,
+          "content": "**2. Choose all that apply**\n• option one\n• option two\n• option three"
+        },
+        {
+          "type": 10,
+          "content": "**3. Rate us \\(1-5\\)**\n5"
+        },
+        {
+          "type": 10,
+          "content": "**4. Markdown injection attempt**\n\\*\\*bold\\*\\* \\_\\_italic\\_\\_ \\# heading \\|\\|spoiler\\|\\| \\<@123456789012345678\\> @everyone a \\[link\\]\\(https://evil.example) and a raw https://example.com/?a=1&b=2"
+        },
+        {
+          "type": 10,
+          "content": "**5. Long answer**\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…\n-# Answer truncated — 1200 more characters"
+        },
+        {
+          "type": 10,
+          "content": "**6. Optional essay \\(not answered\\)**\n_No answer given._"
+        },
+        {
+          "type": 10,
+          "content": "**📎 Upload your poster**\n• 📎 [upload-1AbC.png](https://drive.google.com/file/d/1AbCdEfGhIjK/view)\n• 📎 [upload-2XyZ.png](https://drive.google.com/file/d/2XyZ9QqW/view)"
+        },
+        {
+          "type": 14,
+          "divider": true,
+          "spacing": 2
+        },
+        {
+          "type": 10,
+          "content": "-# Response ID resp_abc123 · Received 2026-11-06 12:34 UTC\n[Open response](https://docs.google.com/forms/d/e/FORMKEY/viewform?edit2=TOKEN) · [Form dashboard](https://docs.google.com/forms/d/FORMID/edit)"
+        }
+      ]
+    }
+  ]
+}
