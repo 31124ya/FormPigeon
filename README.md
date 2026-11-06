@@ -4,9 +4,12 @@
 
 **Google Forms → Discord notifications, rebuilt on [Components V2](https://docs.discord.com/developers/components/reference).**
 
-A single-file Google Apps Script that posts every new form response to your
-Discord channel as one clean, colorful card — no servers, no dependencies,
-no polling, no cost.
+A Google Apps Script that posts every new form response to your
+Discord channel as one clean, colorful card.
+No servers.
+No dependencies.
+No polling.
+No cost.
 
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Discord](https://img.shields.io/badge/Discord-Components_V2-5865F2)
