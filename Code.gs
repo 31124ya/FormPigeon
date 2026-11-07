@@ -6,9 +6,16 @@
 //    1. Open your Google Form  →  Extensions  →  Apps Script
 //    2. Replace the editor contents with this file, then fill in
 //       CONFIG.WEBHOOK_URLS below.
-//    3. Save, then run `menuSendTestMessage` once from the editor to
-//       authorize the script and send a preview card to Discord.
-//    4. Reload the form editor tab, open the new  Discord  menu and
+//    3. Project Settings (gear) → check "Show appsscript.json manifest
+//       file in editor" → open appsscript.json and replace its contents
+//       with the manifest from this repo. This grants the permissions
+//       the script needs, including external requests to Discord
+//       (missing it causes the "no permission to call UrlFetchApp.fetch"
+//       error).
+//    4. Save, then run `menuSendTestMessage` once from the editor to
+//       authorize the script and send a preview card to Discord
+//       (results appear in the execution log, not in a popup).
+//    5. Reload the form editor tab, open the new  Discord  menu and
 //       choose "Install notification trigger". Done!
 // ══════════════════════════════════════════════════════════════════════
 
@@ -820,7 +827,14 @@ function maskWebhookUrl_(url) {
 
 function menuSendTestMessage() {
   try {
-    const payloads = buildPayloadParts(sampleSubmissionData_());
+    // Minimal Components V2 card: one line of text, no sample questions.
+    const payloads = [{
+      flags: FLAG_IS_COMPONENTS_V2,
+      components: [{
+        type: COMPONENT.CONTAINER,
+        components: [textDisplay_('This is a test message.')],
+      }],
+    }];
     const sent = deliver_(payloads);
     report_(
       'Test delivered',
@@ -1044,31 +1058,4 @@ function assertConfigured_() {
       'Copy it from Discord → Server Settings → Integrations → Webhooks → your webhook → Copy Webhook URL.'
     );
   }
-}
-
-/** Synthetic submission used by "Send test message". */
-function sampleSubmissionData_() {
-  const form = FormApp.getActiveForm();
-  return {
-    formTitle: `${form ? form.getTitle() : 'Sample form'} — test notification`,
-    respondentEmail: 'respondent@example.com',
-    timestamp: new Date(),
-    edited: false,
-    responseId: 'test-response-id',
-    editUrl: form ? form.getPublishedUrl() : 'https://docs.google.com/forms',
-    formEditUrl: form ? form.getEditUrl() : 'https://docs.google.com/forms',
-    qa: [
-      { question: 'What is your name?', answer: formatAnswer_('Ada Lovelace') },
-      { question: 'Which workshops did you attend?', answer: formatAnswer_(['Intro to Apps Script', 'Components V2 in practice']) },
-      { question: 'Rate the event (1–5)', answer: formatAnswer_('5') },
-      {
-        question: 'Anything else you would like to tell us?',
-        answer: formatAnswer_('Loved it!\n' +
-          'Markdown typed by respondents shows up as plain text: **bold**, # heading, ' +
-          '<@123456789012345678>, @everyone and ||spoiler||.'),
-      },
-      { question: 'A question left unanswered (demo)', answer: null },
-    ],
-    files: [],
-  };
 }
