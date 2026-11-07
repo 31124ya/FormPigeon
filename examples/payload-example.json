@@ -1,20 +1,19 @@
 {
   "flags": 32768,
-  "username": "🕊️ FormPigeon",
+  "username": "FormPigeon",
   "allowed_mentions": {
     "parse": []
   },
   "components": [
     {
       "type": 17,
-      "accent_color": 5793266,
       "components": [
         {
           "type": 9,
           "components": [
             {
               "type": 10,
-              "content": "## 📝 Edited response — 2026 Community Survey\n-# Respondent: someone@example.com · Received: 2026-11-06 12:34 UTC"
+              "content": "## Edited response — 2026 Community Survey\n-# Respondent: someone@example.com · Received: 2026-11-06 12:34 UTC"
             }
           ],
           "accessory": {
@@ -56,7 +55,7 @@
         },
         {
           "type": 10,
-          "content": "**📎 Upload your poster**\n• 📎 [upload-1AbC.png](https://drive.google.com/file/d/1AbCdEfGhIjK/view)\n• 📎 [upload-2XyZ.png](https://drive.google.com/file/d/2XyZ9QqW/view)"
+          "content": "**Upload your poster**\n• [upload-1AbC.png](https://drive.google.com/file/d/1AbCdEfGhIjK/view)\n• [upload-2XyZ.png](https://drive.google.com/file/d/2XyZ9QqW/view)"
         },
         {
           "type": 14,

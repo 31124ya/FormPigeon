@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════
-//  🕊️  FormPigeon — Google Forms → Discord notifications
+//  FormPigeon — Google Forms → Discord notifications
 //  Built on Discord's Components V2 message system (flag 1 << 15).
 // ──────────────────────────────────────────────────────────────────────
 //  QUICK START (full guide in README.md):
@@ -8,7 +8,7 @@
 //       CONFIG.WEBHOOK_URLS below.
 //    3. Save, then run `menuSendTestMessage` once from the editor to
 //       authorize the script and send a preview card to Discord.
-//    4. Reload the form editor tab, open the new  🕊️ Discord  menu and
+//    4. Reload the form editor tab, open the new  Discord  menu and
 //       choose "Install notification trigger". Done!
 // ══════════════════════════════════════════════════════════════════════
 
@@ -21,9 +21,8 @@ const CONFIG = {
   ],
 
   // ── Appearance ────────────────────────────────────────────────────
-  BOT_NAME: '🕊️ FormPigeon',   // username shown in Discord ('' = webhook default)
+  BOT_NAME: 'FormPigeon',       // username shown in Discord ('' = webhook default)
   AVATAR_URL: '',               // avatar image URL ('' = webhook default)
-  ACCENT_COLOR: 0x5865F2,       // card accent color (left stripe) — Discord blurple
   HEADER_ICON_URL: 'https://ssl.gstatic.com/images/branding/product/1x/forms_48dp.png',
                                 // small icon next to the card header ('' = hide)
 
@@ -75,8 +74,8 @@ const CONFIG = {
   // ── Failure handling ──────────────────────────────────────────────
   EMAIL_ON_ERROR: true,         // email the script owner when a Discord post
                                 // fails (quota, deleted webhook, 429 twice…)
-  TIMEZONE: '',                 // '' = the script's timezone (⚙️ Project
-                                // Settings), or an IANA name like 'Europe/Berlin'
+  TIMEZONE: '',                 // '' = the script's timezone (Project Settings),
+                                // or an IANA name like 'Europe/Berlin'
 };
 
 // ─── Discord Components V2 constants ──────────────────────────────────
@@ -125,8 +124,8 @@ function onFormSubmit(e) {
       console.warn(
         'FormPigeon: onFormSubmit was started manually from the editor, so there is no event to process.\n' +
         'A manual run cannot simulate a form submit — this is expected and nothing is broken.\n' +
-        'Preview a notification: 🕊️ Discord menu → "Send test message".\n' +
-        'Go live: 🕊️ Discord menu → "Install notification trigger", then submit a real response.'
+        'Preview a notification: Discord menu → "Send test message".\n' +
+        'Go live: Discord menu → "Install notification trigger", then submit a real response.'
       );
       return;
     }
@@ -143,8 +142,8 @@ function onFormSubmit(e) {
         console.error(
           'FormPigeon: a form-submit event arrived without a response payload.' +
           (looksLikeSheetEvent
-            ? ' The event looks like a SPREADSHEET event (it has values/range), so the trigger points at the linked Sheet, not the form. Remove it (🕊️ Discord menu → "Remove notification trigger"), then reinstall via the same menu.'
-            : ' If this keeps happening, remove the trigger (🕊️ Discord menu → "Remove notification trigger") and reinstall it via the same menu.') +
+            ? ' The event looks like a SPREADSHEET event (it has values/range), so the trigger points at the linked Sheet, not the form. Remove it (Discord menu → "Remove notification trigger"), then reinstall via the same menu.'
+            : ' If this keeps happening, remove the trigger (Discord menu → "Remove notification trigger") and reinstall it via the same menu.') +
           ` Event keys seen: [${describeEvent_(e)}].`
         );
         return;
@@ -443,10 +442,10 @@ function buildPayloadParts(data) {
     for (const group of data.files) {
       const lines = group.files.map(f => {
         const label = truncate_(escapeUserText_(f.name || 'Uploaded file'), 80);
-        return `• 📎 [${label}](${f.url})`;
+        return `• [${label}](${f.url})`;
       });
       const question = truncate_(escapeUserText_(group.question), 100);
-      blocks.push(makeTextBlock_(`**📎 ${question}**\n${lines.join('\n')}`));
+      blocks.push(makeTextBlock_(`**${question}**\n${lines.join('\n')}`));
     }
   }
 
@@ -465,7 +464,7 @@ function assemblePart_(data, group, index, total) {
   if (index === 0) {
     children.push(headerSection_(data));
   } else {
-    const continued = `## 🕊️ ${truncate_(escapeUserText_(data.formTitle), 80)} — continued\n-# Part ${index + 1} of ${total}`;
+    const continued = `## ${truncate_(escapeUserText_(data.formTitle), 80)} — continued\n-# Part ${index + 1} of ${total}`;
     children.push(textDisplay_(continued));
   }
   children.push(separator_(1));
@@ -482,7 +481,6 @@ function assemblePart_(data, group, index, total) {
 
   const components = [{
     type: COMPONENT.CONTAINER,
-    accent_color: CONFIG.ACCENT_COLOR == null ? undefined : Number(CONFIG.ACCENT_COLOR),
     components: children,
   }];
 
@@ -505,8 +503,8 @@ function assemblePart_(data, group, index, total) {
 function headerSection_(data) {
   const title = truncate_(escapeUserText_(data.formTitle), 80);
   const heading = data.edited
-    ? `## 📝 Edited response — ${title}`
-    : `## 📬 New response — ${title}`;
+    ? `## Edited response — ${title}`
+    : `## New response — ${title}`;
 
   const bits = [];
   if (CONFIG.SHOW_RESPONDENT_EMAIL && data.respondentEmail) {
@@ -731,7 +729,7 @@ function handleFailure_(err) {
     if (recipient) {
       MailApp.sendEmail({
         to: recipient,
-        subject: '🕊️ FormPigeon could not deliver a form notification',
+        subject: 'FormPigeon could not deliver a form notification',
         body:
           'FormPigeon failed to post a form response to Discord.\n\n' +
           `Error:\n${err && err.stack ? err.stack : String(err)}\n\n` +
@@ -744,22 +742,22 @@ function handleFailure_(err) {
 }
 
 // ══════════════════════════════════════════════════════════════════════
-//  Form-editor menu (🕊️ Discord)
+//  Form-editor menu (Discord)
 //  Only works when this script is BOUND to the form
 //  (open the form → Extensions → Apps Script).
 // ══════════════════════════════════════════════════════════════════════
 
 function onOpen() {
   FormApp.getUi()
-    .createMenu('🕊️ Discord')
-    .addItem('📮 Send test message', 'menuSendTestMessage')
-    .addItem('🔌 Test webhook connection', 'menuTestWebhookConnection')
-    .addItem('🔐 Check authorization', 'menuCheckAuthorization')
+    .createMenu('Discord')
+    .addItem('Send test message', 'menuSendTestMessage')
+    .addItem('Test webhook connection', 'menuTestWebhookConnection')
+    .addItem('Check authorization', 'menuCheckAuthorization')
     .addSeparator()
-    .addItem('🟢 Install notification trigger', 'menuInstallTrigger')
-    .addItem('🔴 Remove notification trigger', 'menuUninstallTrigger')
+    .addItem('Install notification trigger', 'menuInstallTrigger')
+    .addItem('Remove notification trigger', 'menuUninstallTrigger')
     .addSeparator()
-    .addItem('ℹ️ Check status', 'menuShowStatus')
+    .addItem('Check status', 'menuShowStatus')
     .addToUi();
 }
 
@@ -825,14 +823,14 @@ function menuSendTestMessage() {
     const payloads = buildPayloadParts(sampleSubmissionData_());
     const sent = deliver_(payloads);
     report_(
-      '🕊️ Test delivered',
+      'Test delivered',
       `Sent ${sent} message(s) to your webhook(s).\n\n` +
-      'If nothing arrived in Discord, run "🔌 Test webhook connection" — it tells you ' +
+      'If nothing arrived in Discord, run "Test webhook connection" — it tells you ' +
       'exactly which channel each webhook posts into and posts a plain-text ping there.',
       false
     );
   } catch (err) {
-    report_('❌ Test failed', humanizeError_(err), true);
+    report_('Test failed', humanizeError_(err), true);
   }
 }
 
@@ -847,7 +845,7 @@ function menuTestWebhookConnection() {
     .map(u => String(u).trim())
     .filter(Boolean);
   if (!urls.length) {
-    report_('🔌 Webhook check', 'CONFIG.WEBHOOK_URLS is empty — paste at least one webhook URL into the CONFIG block at the top of the script.', true);
+    report_('Webhook check', 'CONFIG.WEBHOOK_URLS is empty — paste at least one webhook URL into the CONFIG block at the top of the script.', true);
     return;
   }
 
@@ -856,7 +854,7 @@ function menuTestWebhookConnection() {
     const base = url.split('?')[0];
     if (!isWebhookUrl_(base)) {
       lines.push(
-        `❌ ${maskWebhookUrl_(base)} — not a valid webhook URL. Copy the full URL again from Discord ` +
+        `${maskWebhookUrl_(base)} — not a valid webhook URL. Copy the full URL again from Discord ` +
         '(Server Settings → Integrations → Webhooks → your webhook → Copy Webhook URL).'
       );
       continue;
@@ -866,15 +864,15 @@ function menuTestWebhookConnection() {
       const infoResp = UrlFetchApp.fetch(base, { method: 'get', muteHttpExceptions: true });
       const infoCode = infoResp.getResponseCode();
       if (infoCode === 404) {
-        lines.push(`❌ ${maskWebhookUrl_(base)} — HTTP 404: this webhook no longer exists (deleted or re-created). Copy a fresh URL.`);
+        lines.push(`${maskWebhookUrl_(base)} — HTTP 404: this webhook no longer exists (deleted or re-created). Copy a fresh URL.`);
         continue;
       }
       if (infoCode === 401 || infoCode === 403) {
-        lines.push(`❌ ${maskWebhookUrl_(base)} — HTTP ${infoCode}: the token part of the URL is wrong or was invalidated.`);
+        lines.push(`${maskWebhookUrl_(base)} — HTTP ${infoCode}: the token part of the URL is wrong or was invalidated.`);
         continue;
       }
       if (infoCode < 200 || infoCode >= 300) {
-        lines.push(`❌ ${maskWebhookUrl_(base)} — HTTP ${infoCode}: ${infoResp.getContentText().slice(0, 200)}`);
+        lines.push(`${maskWebhookUrl_(base)} — HTTP ${infoCode}: ${infoResp.getContentText().slice(0, 200)}`);
         continue;
       }
 
@@ -890,7 +888,7 @@ function menuTestWebhookConnection() {
         method: 'post',
         contentType: 'application/json',
         payload: JSON.stringify({
-          content: '🕊️ FormPigeon connection test — if you can read this message in this channel, the webhook works.',
+          content: 'FormPigeon connection test — if you can read this message in this channel, the webhook works.',
           allowed_mentions: { parse: [] },
         }),
         muteHttpExceptions: true,
@@ -898,21 +896,21 @@ function menuTestWebhookConnection() {
       const postCode = postResp.getResponseCode();
       if (postCode >= 200 && postCode < 300) {
         lines.push(
-          `✅ ${maskWebhookUrl_(base)} — works! A plain-text test message was just posted to ${channel}. ` +
+          `${maskWebhookUrl_(base)} — works! A plain-text test message was just posted to ${channel}. ` +
           'If you see it but NOT the card, you were looking at the wrong channel or the card run failed — check the execution log.'
         );
       } else {
         lines.push(
-          `⚠️ ${maskWebhookUrl_(base)} — exists and posts into ${channel}, but posting failed with HTTP ${postCode}: ` +
+          `${maskWebhookUrl_(base)} — exists and posts into ${channel}, but posting failed with HTTP ${postCode}: ` +
           postResp.getContentText().slice(0, 200)
         );
       }
     } catch (err) {
-      lines.push(`❌ ${maskWebhookUrl_(base)} — ${err && err.message ? err.message : err}`);
+      lines.push(`${maskWebhookUrl_(base)} — ${err && err.message ? err.message : err}`);
     }
     Utilities.sleep(300);
   }
-  report_('🔌 Webhook connection check', lines.join('\n\n'), false);
+  report_('Webhook connection check', lines.join('\n\n'), false);
 }
 
 /**
@@ -972,13 +970,13 @@ function menuInstallTrigger() {
     removeExistingTriggers_(form);
     ScriptApp.newTrigger('onFormSubmit').forForm(form).onFormSubmit().create();
     report_(
-      '✅ Trigger installed',
+      'Trigger installed',
       'Every new form response will now be posted to Discord.\n\n' +
       'Tip: send one real submission to verify end-to-end.',
       false
     );
   } catch (err) {
-    report_('❌ Install failed', humanizeError_(err), true);
+    report_('Install failed', humanizeError_(err), true);
   }
 }
 
@@ -988,14 +986,14 @@ function menuUninstallTrigger() {
     if (!form) throw new Error('This script is not bound to a form.');
     const removed = removeExistingTriggers_(form);
     report_(
-      removed ? '🗑️ Trigger removed' : 'Nothing to remove',
+      removed ? 'Trigger removed' : 'Nothing to remove',
       removed
         ? 'Notifications are now switched off. The script and its authorization remain.'
         : 'No notification trigger was installed for this form.',
       false
     );
   } catch (err) {
-    report_('❌ Remove failed', humanizeError_(err), true);
+    report_('Remove failed', humanizeError_(err), true);
   }
 }
 
@@ -1017,11 +1015,11 @@ function menuShowStatus() {
     ];
     if (!form) {
       lines.push('');
-      lines.push('⚠️ This script is not bound to a form — the Discord menu only works from a form-bound script.');
+      lines.push('This script is not bound to a form — the Discord menu only works from a form-bound script.');
     }
-    report_('ℹ️ FormPigeon status', lines.join('\n'), false);
+    report_('FormPigeon status', lines.join('\n'), false);
   } catch (err) {
-    report_('❌ Status failed', humanizeError_(err), true);
+    report_('Status failed', humanizeError_(err), true);
   }
 }
 

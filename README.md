@@ -35,9 +35,9 @@ Discord actually renders in 2025+:
 
 ## Features
 
-- **Components V2 single card** — `Container` with accent stripe, header
-  section with icon, separators, one `Text Display` per question, footer with
-  links. This is the embed-replacement format Discord is pushing.
+- **Components V2 single card** — a `Container` holding a header section with
+  icon, separators, one `Text Display` per question, and a footer with links.
+  This is the embed-replacement format Discord is pushing.
 - **Automatic pagination** — Discord allows 4,000 characters of text and 40
   components per message; FormPigeon splits long submissions into
   `Part 2 of 3` cards automatically.
@@ -79,7 +79,7 @@ There is nothing to host, and the webhook URL never leaves your script.
 ```text
 ┌───────────────────────────────────────────────┐
 │  New response — 2026 Community Survey         │  ← Container (type 17),
-│ ───────────────────────────────────────────── │    accent stripe on the left
+│ ───────────────────────────────────────────── │    wraps the whole card
 │                                               │
 │ 1. Full name                                  │  ← Text Display (type 10),
 │    Ada Lovelace                               │    one per question
@@ -182,9 +182,8 @@ Everything lives in the `CONFIG` object at the top of `Code.gs`.
 | Key | Type | Default | Description |
 |---|---|---|---|
 | `WEBHOOK_URLS` | `string[]` | — | **Required.** One or more incoming webhook URLs. Invalid URLs are ignored with a console warning. |
-| `BOT_NAME` | `string` | `'🕊️ FormPigeon'` | Webhook username override shown in Discord. `''` keeps the webhook's own name. |
+| `BOT_NAME` | `string` | `'FormPigeon'` | Webhook username override shown in Discord. `''` keeps the webhook's own name. |
 | `AVATAR_URL` | `string` | `''` | Avatar image URL for the webhook message. |
-| `ACCENT_COLOR` | `number` | `0x5865F2` | Accent stripe color of the card. Any integer, e.g. `0x00B894`. |
 | `HEADER_ICON_URL` | `string` | Google Forms logo | Icon shown next to the card header (Section thumbnail accessory). `''` hides it. |
 | `MENTION` | `string` | `''` | Ping prepended to each notification. `'<@&ROLE_ID>'`, `'<@USER_ID>'`, `'@here'`, `'@everyone'` or `''`. See [Mentions](#mentions--pings). |
 | `THREAD_ID` | `string` | `''` | Thread/forum-post ID to post into instead of the channel root. |
