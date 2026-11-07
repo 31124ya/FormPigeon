@@ -10,6 +10,46 @@ answers, real file names, optional pings. Long submissions are split into
 `Part 2 of N` cards automatically; edited responses are labeled. A real
 example payload lives in [`examples/payload-example.json`](examples/payload-example.json).
 
+## Contents
+
+- [How it works](#how-it-works)
+- [Setup](#setup)
+  - [1. Create a Discord webhook](#1-create-a-discord-webhook)
+  - [2. Install the script](#2-install-the-script)
+  - [3. Add the manifest (appsscript.json)](#3-add-the-manifest-appsscriptjson)
+  - [4. Authorize and test](#4-authorize-and-test)
+  - [5. Go live](#5-go-live)
+- [Menu commands](#menu-commands)
+- [Configuration](#configuration)
+- [Troubleshooting](#troubleshooting)
+- [Good to know](#good-to-know)
+- [Uninstall](#uninstall)
+- [License](#license)
+
+## How it works
+
+```mermaid
+flowchart LR
+    A[Respondent submits<br>Google Form] --> B[Apps Script<br>onFormSubmit trigger]
+    B --> C[FormPigeon formats +<br>sanitizes the answers]
+    C --> D[POST webhook JSON<br>flags 32768 + ?with_components=true]
+    D --> E[Discord renders the<br>Components V2 card]
+```
+
+1. **Trigger** — an installable `onFormSubmit` trigger fires the moment a
+   response arrives; nothing polls or runs on a schedule.
+2. **Collect** — the script reads the form structure and the response,
+   formats every answer type, and resolves uploaded file names through Drive.
+3. **Build** — the data becomes one Components V2 payload: a `Container`
+   (type 17) holding `Text Display` blocks (type 10) and `Separator`s
+   (type 14). Respondent content is escaped so it cannot forge markdown or
+   pings, and anything past Discord's 4,000-character / 40-component limits
+   starts a new `Part 2 of N` card.
+4. **Deliver** — the payload is POSTed to each webhook with `flags: 32768`
+   (`IS_COMPONENTS_V2`) and `?with_components=true`; a `429` is retried once
+   after Discord's `retry_after`. If delivery fails anyway, the script
+   emails you instead of failing silently.
+
 ## Setup
 
 ### 1. Create a Discord webhook
